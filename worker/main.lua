@@ -69,8 +69,16 @@ end
 local handlers = {}
 
 function handlers.assign(from, msg)
+  local roleChanged = config.role ~= msg.role
   config.role = msg.role
-  config.config = msg.config or {}
+  -- Preserve existing config if master sent no config (UI role-picker sends
+  -- config = {}; that should NOT wipe what `fct setup` wrote).
+  if msg.config and next(msg.config) ~= nil then
+    config.config = msg.config
+  elseif roleChanged then
+    -- Brand new role: start clean.
+    config.config = {}
+  end
   config.masterId = from
   saveConfig()
   logger.info("worker", "assigned role=" .. config.role .. " by master=" .. from)

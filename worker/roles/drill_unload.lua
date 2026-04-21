@@ -59,6 +59,19 @@ local function renderMonitor()
   m.setBackgroundColor(colors.black); m.clear()
   local w, h = m.getSize()
 
+  -- Config sanity check first — if misconfigured, show that loudly.
+  if not cfg.buffer or not peripheral.wrap(cfg.buffer) then
+    m.setCursorPos(1, 1); m.setTextColor(colors.red)
+    m.write("DRILL NOT CONFIGURED")
+    m.setCursorPos(1, 3); m.setTextColor(colors.white)
+    m.write("Buffer: " .. tostring(cfg.buffer or "<unset>"))
+    m.setCursorPos(1, 5); m.setTextColor(colors.yellow)
+    m.write("Run on this computer:")
+    m.setCursorPos(1, 6); m.setTextColor(colors.lime)
+    m.write("  fct setup drill_unload")
+    return
+  end
+
   -- Header
   m.setCursorPos(1, 1); m.setTextColor(colors.yellow)
   m.write((cfg.drillName or ("Drill #" .. os.getComputerID())):sub(1, w))
@@ -201,6 +214,11 @@ function M.start(c)
   state.session = nil
   state.history = {}
   logger.info("drill", "started buffer=" .. tostring(cfg.buffer) .. " mode=" .. cfg.mode)
+  if not cfg.buffer then
+    logger.error("drill", "NO BUFFER CONFIGURED — run `fct setup drill_unload` on this computer")
+  elseif not peripheral.wrap(cfg.buffer) then
+    logger.error("drill", "buffer '" .. cfg.buffer .. "' is not attached / not reachable")
+  end
   renderMonitor()
 end
 
