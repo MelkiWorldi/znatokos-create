@@ -8,7 +8,7 @@ local M = {}
 local ROLES = {
   "generic", "mixer", "press", "crusher", "saw", "spout", "deployer",
   "mcrafter", "fan", "sequenced", "stock", "trains", "package_endpoint",
-  "cctl_bridge", "aero_controller", "monitor_slave",
+  "cctl_bridge", "aero_controller", "drill_unload", "monitor_slave",
 }
 
 local selected = nil

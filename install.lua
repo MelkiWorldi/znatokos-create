@@ -13,10 +13,11 @@ local FILES = {
     "master/main.lua", "master/scheduler.lua", "master/parstock.lua",
     "master/registry.lua", "master/recipes.lua", "master/stock.lua",
     "master/trains.lua", "master/monitoring.lua", "master/cctl_adapter.lua",
+    "master/drills.lua",
     "master/ui/framework.lua", "master/ui/dashboard.lua",
     "master/ui/craft_menu.lua", "master/ui/workers_tab.lua",
     "master/ui/trains_tab.lua", "master/ui/alarms_tab.lua",
-    "master/ui/recipes_tab.lua",
+    "master/ui/recipes_tab.lua", "master/ui/drills_tab.lua",
   },
   worker = {
     "worker/main.lua",
@@ -27,7 +28,8 @@ local FILES = {
     "worker/roles/fan.lua", "worker/roles/sequenced.lua",
     "worker/roles/stock.lua", "worker/roles/trains.lua",
     "worker/roles/package_endpoint.lua", "worker/roles/cctl_bridge.lua",
-    "worker/roles/aero_controller.lua", "worker/roles/monitor_slave.lua",
+    "worker/roles/aero_controller.lua", "worker/roles/drill_unload.lua",
+    "worker/roles/monitor_slave.lua",
   },
   recipes = {
     "recipes/_template.lua", "recipes/brass.lua", "recipes/andesite_alloy.lua",

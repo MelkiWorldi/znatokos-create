@@ -13,6 +13,7 @@ local scheduler  = require("master.scheduler")
 local parstock   = require("master.parstock")
 local trains     = require("master.trains")
 local monitoring = require("master.monitoring")
+local drills     = require("master.drills")
 
 local ui          = require("master.ui.framework")
 local dashboard   = require("master.ui.dashboard")
@@ -21,6 +22,7 @@ local workers_tab = require("master.ui.workers_tab")
 local trains_tab  = require("master.ui.trains_tab")
 local alarms_tab  = require("master.ui.alarms_tab")
 local recipes_tab = require("master.ui.recipes_tab")
+local drills_tab  = require("master.ui.drills_tab")
 
 -- Wire scheduler into parstock and craft_menu (avoid circular requires)
 parstock.setScheduler(scheduler)
@@ -50,6 +52,8 @@ local tabs = ui.Tabs{
       onTouch = function(x, y) recipes_tab.onTouch(x, y) end },
     { name = "Trains",    draw = function(m) trains_tab.draw(m) end,
       onTouch = function(x, y) trains_tab.onTouch(x, y) end },
+    { name = "Drills",    draw = function(m) drills_tab.draw(m) end,
+      onTouch = function(x, y) drills_tab.onTouch(x, y) end },
     { name = "Alarms",    draw = function(m) alarms_tab.draw(m) end,
       onTouch = function(x, y) alarms_tab.onTouch(x, y) end },
   },
@@ -57,6 +61,7 @@ local tabs = ui.Tabs{
 
 dashboard.build(mon); craft_menu.build(mon); workers_tab.build(mon)
 recipes_tab.build(mon); trains_tab.build(mon); alarms_tab.build(mon)
+drills_tab.build(mon)
 tabs:redraw()
 
 -- Redraw on event
@@ -72,6 +77,8 @@ bus.on("task_done",       scheduleRedraw)
 bus.on("task_error",      scheduleRedraw)
 bus.on("alarm_raised",    scheduleRedraw)
 bus.on("worker_offline",  scheduleRedraw)
+bus.on("drill_update",    scheduleRedraw)
+bus.on("drill_session_ended", scheduleRedraw)
 
 -- Heartbeat loop
 local function heartbeatLoop()
@@ -108,6 +115,10 @@ local function netLoop()
         monitoring.onStatus(from, msg)
       elseif msg.type == "alarm" then
         monitoring.onAlarm(from, msg)
+      elseif msg.type == "drill_session_start"
+          or msg.type == "drill_session_delta"
+          or msg.type == "drill_session_end" then
+        drills.onMessage(from, msg)
       end
     end
   end
