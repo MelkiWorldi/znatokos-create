@@ -53,8 +53,12 @@ local function shortItem(k)
   return s
 end
 
-local function renderMonitor()
-  local m = wrapMonitor(); if not m then return end
+local function renderMonitorImpl()
+  local m = wrapMonitor()
+  if not m then
+    logger.warn("drill", "renderMonitor: no monitor (cfg.monitor=" .. tostring(cfg.monitor) .. ", showLocal=" .. tostring(cfg.showLocal) .. ")")
+    return
+  end
   m.setTextScale(0.5)
   m.setBackgroundColor(colors.black); m.clear()
   local w, h = m.getSize()
@@ -117,6 +121,11 @@ local function renderMonitor()
     m.write(("#%d  %s  %d  %.1f/min"):format(
       i, fmtDuration(s.durationSec or 0), s.total or 0, s.ratePerMin or 0):sub(1, w))
   end
+end
+
+local function renderMonitor()
+  local ok, err = pcall(renderMonitorImpl)
+  if not ok then logger.error("drill", "render error: " .. tostring(err)) end
 end
 
 local function wrapRelay()
