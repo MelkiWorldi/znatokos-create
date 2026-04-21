@@ -140,6 +140,7 @@ local function netLoop()
       elseif msg.type == "drill_session_start"
           or msg.type == "drill_session_delta"
           or msg.type == "drill_session_end" then
+        logger.info("main", "drill msg from #" .. from .. ": " .. msg.type)
         drills.onMessage(from, msg)
       end
     end
