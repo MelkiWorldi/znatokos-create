@@ -38,6 +38,17 @@ local function saveConfig()
   state.save(CONFIG_PATH, config)
 end
 
+-- Rediscover master via rednet.lookup("master"). Falls back to broadcast hello.
+local function discoverMaster()
+  local id = net.lookup("master")
+  if id and id ~= config.masterId then
+    logger.info("worker", "rediscovered master: " .. id .. " (was " .. tostring(config.masterId) .. ")")
+    config.masterId = id
+    saveConfig()
+  end
+  return id
+end
+
 local function sendHello()
   local msg = {
     type = "hello",
@@ -46,8 +57,9 @@ local function sendHello()
     role = config.role,
     peripherals = periph.scan(),
   }
-  if config.masterId then
-    net.send(config.masterId, msg)
+  local target = config.masterId or discoverMaster()
+  if target then
+    net.send(target, msg)
   else
     net.broadcast(msg)
   end
@@ -97,10 +109,14 @@ function handlers.reboot(from, msg)
 end
 
 -- Main loops
+local lastMasterMsgAt = 0
 local function netLoop()
   while true do
     local from, msg = net.receive()
     if type(msg) == "table" and msg.type then
+      if config.masterId and from == config.masterId then
+        lastMasterMsgAt = util.now()
+      end
       local h = handlers[msg.type]
       if h then
         local ok, err = pcall(h, from, msg)
@@ -108,6 +124,18 @@ local function netLoop()
       elseif roleModule and roleModule.onMessage then
         pcall(roleModule.onMessage, from, msg)
       end
+    end
+  end
+end
+
+-- If master has been silent for too long, clear cached ID so next hello re-looks up.
+local function staleMasterLoop()
+  while true do
+    os.sleep(30)
+    if config.masterId and util.now() - lastMasterMsgAt > 45 then
+      logger.warn("worker", "master silent, forcing rediscovery")
+      config.masterId = nil
+      saveConfig()
     end
   end
 end
@@ -139,4 +167,4 @@ end
 
 sendHello()
 
-parallel.waitForAny(netLoop, heartbeatLoop, roleLoop)
+parallel.waitForAny(netLoop, heartbeatLoop, roleLoop, staleMasterLoop)

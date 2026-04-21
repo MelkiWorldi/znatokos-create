@@ -45,7 +45,28 @@ fct peripherals     # list attached peripherals with types
 fct log             # open /factory/data/log.txt
 fct reinstall       # re-run installer interactively
 fct reset           # wipe /factory/data (keeps code), reboot
+fct export          # copy /factory/data onto a floppy (for migration)
+fct import          # restore /factory/data from a floppy
+fct find-master     # force a worker to rediscover the master
 ```
+
+## Migrating the master
+
+Workers locate the master by the well-known label `master` in the rednet
+protocol, not by a fixed computer ID — so you can move the master anywhere on
+the network without reconfiguring workers.
+
+1. On the **old master**: attach a Disk Drive with a floppy, run `fct export`,
+   pop out the floppy.
+2. On the **new computer**: install master (`wget run <url> master`), insert
+   the floppy, run `fct import`, reboot.
+3. Workers discover the new master automatically within ~30s. If a worker
+   stays stuck on the old cached ID, run `fct find-master` on it (or just
+   reboot it).
+
+You can also skip the floppy and transfer data in-game via a Wired Modem chain
+— any shared filesystem works; the installer only cares that `/factory/data`
+exists on the new master before it reads state on boot.
 
 ## Requirements
 

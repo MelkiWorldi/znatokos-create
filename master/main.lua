@@ -29,6 +29,7 @@ parstock.setScheduler(scheduler)
 craft_menu.setScheduler(scheduler)
 
 net.open()
+net.hostAs("master")
 recipes.loadAll()
 
 local mon = periph.wrap(periph.TYPES.monitor)

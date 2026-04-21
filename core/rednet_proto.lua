@@ -34,6 +34,18 @@ function M.open()
   return modemSide
 end
 
+-- Register this computer under a well-known label (e.g. "master") in addition
+-- to its numeric ID. Used for master rediscovery after migration.
+function M.hostAs(label)
+  rednet.host(M.PROTOCOL, label)
+end
+
+-- Look up a computer by well-known label. Returns the first matching ID.
+function M.lookup(label, timeout)
+  local id = rednet.lookup(M.PROTOCOL, label)
+  return id
+end
+
 function M.send(to, msg)
   return rednet.send(to, msg, M.PROTOCOL)
 end
