@@ -1,6 +1,16 @@
 -- factory bootstrap: dispatch to master/worker based on /factory/data/role.dat
 package.path = "/factory/?.lua;/factory/?/init.lua;" .. package.path
 
+-- Register short aliases so `update` and `fct` work from the shell.
+if shell and shell.setAlias then
+  if fs.exists("/factory/bin/update.lua") then
+    shell.setAlias("update", "/factory/bin/update.lua")
+  end
+  if fs.exists("/factory/bin/fct.lua") then
+    shell.setAlias("fct", "/factory/bin/fct.lua")
+  end
+end
+
 local function readRole()
   if not fs.exists("/factory/data/role.dat") then return nil end
   local f = fs.open("/factory/data/role.dat", "r")

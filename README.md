@@ -7,17 +7,45 @@ Factory Gauge, Chain Conveyor) and orchestrates machine workers (mixer, press,
 crusher, spout, deployer, mechanical crafter, fan, sequenced assembly, trains,
 Aeronautics controllers) over a rednet network with a master + workers topology.
 
-## Install
-
-On each computer:
+## Install (one command)
 
 ```
-wget https://raw.githubusercontent.com/MelkiWorldi/znatokos-create/main/install.lua install
-install
+wget run https://raw.githubusercontent.com/MelkiWorldi/znatokos-create/main/install.lua
 ```
 
-Pick a role (`master`, `worker`, `monitor_slave`) and reboot. On the master,
-open the **Workers** tab and assign roles to newly-registered workers.
+Auto-detects the default role (monitor attached → `master`, else `worker`),
+prompts only if ambiguous, downloads everything, labels the computer, reboots.
+
+Non-interactive variants — append the role as an argument:
+
+```
+wget run <url> master
+wget run <url> worker
+wget run <url> monitor_slave
+```
+
+On the master, open the **Workers** tab and assign roles to new workers.
+
+## Update
+
+On any computer, from the shell:
+
+```
+update
+```
+
+Re-pulls the latest code for the role this computer is running. Data (registry,
+queue, par-stock, recipes, drill history) is preserved.
+
+## CLI
+
+```
+fct                 # status
+fct peripherals     # list attached peripherals with types
+fct log             # open /factory/data/log.txt
+fct reinstall       # re-run installer interactively
+fct reset           # wipe /factory/data (keeps code), reboot
+```
 
 ## Requirements
 
