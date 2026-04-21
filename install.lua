@@ -12,6 +12,9 @@
 local BASE_URL = "https://raw.githubusercontent.com/MelkiWorldi/znatokos-create/main"
 
 local FILES = {
+  common = {
+    "startup.lua",
+  },
   core = {
     "core/util.lua", "core/eventbus.lua", "core/logger.lua",
     "core/state.lua", "core/rednet_proto.lua", "core/peripherals.lua",
@@ -165,7 +168,7 @@ local function setLabel(role)
 end
 
 local function sets(role)
-  local s = { core = true, bin = true }
+  local s = { common = true, core = true, bin = true }
   if role == "master" then s.master = true; s.recipes = true
   else s.worker = true end
   return s
