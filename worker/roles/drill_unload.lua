@@ -229,13 +229,29 @@ end
 
 function M.tick()
   local curr = snapshot()
-  if not curr then return end
+  if not curr then
+    state._noSnapCount = (state._noSnapCount or 0) + 1
+    if state._noSnapCount % 15 == 1 then
+      logger.warn("drill", "snapshot() returned nil — buffer '" .. tostring(cfg.buffer) .. "' not reachable or not an inventory")
+    end
+    return
+  end
   local prev = state.lastSnapshot or {}
   local delta, added = diff(prev, curr)
   state.lastSnapshot = curr
 
   local now = util.now()
   local rsOn = (cfg.mode ~= "auto") and redstoneActive()
+
+  -- Diagnostic heartbeat: every 15s confirm snapshot size and last delta
+  if now - (state._lastDiag or 0) >= 15 then
+    state._lastDiag = now
+    local count = 0; for _ in pairs(curr) do count = count + 1 end
+    local totalItems = 0
+    for _, v in pairs(curr) do totalItems = totalItems + v end
+    logger.info("drill", ("diag: types=%d items=%d added=%d rs=%s sess=%s"):format(
+      count, totalItems, added, tostring(rsOn), state.session and "YES" or "no"))
+  end
 
   -- Start conditions
   if not state.session then
