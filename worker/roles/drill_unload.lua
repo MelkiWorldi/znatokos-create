@@ -9,6 +9,8 @@
 --   relaySide    = side on relay reading the trigger ("north" default)
 --   idleTimeout  = seconds of no new items before auto-closing session (default 10)
 --   drillName    = human label shown in UI ("Drill #1" default)
+--   monitor      = peripheral name of monitor (optional, auto-detect if omitted)
+--   showLocal    = set to false to disable local monitor render (default true)
 
 local periph = require("core.peripherals")
 local logger = require("core.logger")
@@ -24,11 +26,84 @@ local state = {
   session = nil,      -- active session table, or nil
   lastSnapshot = nil, -- previous {itemKey -> count}
   lastItemAt = 0,     -- time of last delta>0
+  history = {},       -- last N finished sessions (for local monitor)
 }
+local LOCAL_HISTORY_LIMIT = 10
 
 local function wrapBuffer()
   if not cfg.buffer then return nil end
   return peripheral.wrap(cfg.buffer)
+end
+
+local function wrapMonitor()
+  if cfg.showLocal == false then return nil end
+  local name = cfg.monitor or periph.findOne("monitor")
+  return name and peripheral.wrap(name) or nil
+end
+
+local function fmtDuration(sec)
+  sec = math.floor(sec)
+  if sec < 60 then return sec .. "s" end
+  local m = math.floor(sec / 60); local s = sec - m * 60
+  return string.format("%dm%02ds", m, s)
+end
+
+local function shortItem(k)
+  local s = k:gsub("^minecraft:", ""):gsub("^create:", "c/")
+  return s
+end
+
+local function renderMonitor()
+  local m = wrapMonitor(); if not m then return end
+  m.setTextScale(0.5)
+  m.setBackgroundColor(colors.black); m.clear()
+  local w, h = m.getSize()
+
+  -- Header
+  m.setCursorPos(1, 1); m.setTextColor(colors.yellow)
+  m.write((cfg.drillName or ("Drill #" .. os.getComputerID())):sub(1, w))
+
+  -- Status line
+  m.setCursorPos(1, 2); m.setTextColor(colors.lightGray)
+  if state.session then
+    local elapsed = util.now() - state.session.startedAt
+    local rate = elapsed > 0 and state.session.total / (elapsed / 60) or 0
+    m.setTextColor(colors.lime)
+    m.write(("ACTIVE %s   %d items   %.1f/min"):format(
+      fmtDuration(elapsed), state.session.total, rate))
+  else
+    m.setTextColor(colors.gray)
+    m.write("idle")
+  end
+
+  -- Top items of current or latest session
+  local sess = state.session or state.history[1]
+  m.setCursorPos(1, 4); m.setTextColor(colors.white)
+  m.write(state.session and "Current haul:" or "Last session:")
+  if sess and sess.totals then
+    local list = {}
+    for k, v in pairs(sess.totals) do list[#list + 1] = { k = k, v = v } end
+    table.sort(list, function(a, b) return a.v > b.v end)
+    local y = 5
+    for i, it in ipairs(list) do
+      if y > h - 4 or i > 12 then break end
+      m.setCursorPos(1, y); m.setTextColor(colors.white)
+      m.write(shortItem(it.k):sub(1, w - 9))
+      m.setCursorPos(math.max(1, w - 7), y); m.setTextColor(colors.lightBlue)
+      m.write(tostring(it.v))
+      y = y + 1
+    end
+  end
+
+  -- History summary (last 3)
+  m.setCursorPos(1, h - 3); m.setTextColor(colors.yellow)
+  m.write(("History (%d):"):format(#state.history))
+  for i = 1, math.min(3, #state.history) do
+    local s = state.history[i]
+    m.setCursorPos(1, h - 3 + i); m.setTextColor(colors.lightGray)
+    m.write(("#%d  %s  %d  %.1f/min"):format(
+      i, fmtDuration(s.durationSec or 0), s.total or 0, s.ratePerMin or 0):sub(1, w))
+  end
 end
 
 local function wrapRelay()
@@ -108,6 +183,8 @@ local function pushEnd(sess)
   end
   logger.info("drill", ("session end: %d items in %ds (%.1f/min)"):format(
     sess.total, math.floor(sess.durationSec), sess.ratePerMin))
+  table.insert(state.history, 1, sess)
+  while #state.history > LOCAL_HISTORY_LIMIT do table.remove(state.history) end
 end
 
 local function redstoneActive()
@@ -122,7 +199,9 @@ function M.start(c)
   cfg.idleTimeout = cfg.idleTimeout or 10
   state.lastSnapshot = snapshot() or {}
   state.session = nil
+  state.history = {}
   logger.info("drill", "started buffer=" .. tostring(cfg.buffer) .. " mode=" .. cfg.mode)
+  renderMonitor()
 end
 
 function M.tick()
@@ -171,6 +250,12 @@ function M.tick()
       pushEnd(state.session)
       state.session = nil
     end
+  end
+
+  -- Local monitor redraw: every tick while active, every ~5s when idle
+  if state.session or (now - (state._lastRender or 0) >= 5) then
+    state._lastRender = now
+    renderMonitor()
   end
 end
 

@@ -177,6 +177,20 @@ function wizards.drill_unload()
 
   -- name
   cfg.drillName = prompt("Drill display name?", "Drill #" .. os.getComputerID())
+
+  -- local monitor?
+  local hasMon = false
+  for _, p in ipairs(scanPeripherals()) do
+    if p.type == "monitor" then hasMon = true; break end
+  end
+  if hasMon then
+    if promptYes("A monitor is attached — show drill stats on it?", true) then
+      cfg.monitor = pickPeripheral("Which monitor?",
+        function(p) return p.type == "monitor" end)
+    else
+      cfg.showLocal = false
+    end
+  end
   return cfg
 end
 
