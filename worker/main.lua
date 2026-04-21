@@ -55,6 +55,7 @@ local function sendHello()
     worker = os.getComputerID(),
     label = os.getComputerLabel(),
     role = config.role,
+    config = config.config,
     peripherals = periph.scan(),
   }
   local target = config.masterId or discoverMaster()

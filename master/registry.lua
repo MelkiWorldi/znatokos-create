@@ -25,6 +25,13 @@ function M.upsertHello(id, msg)
   w.label       = msg.label
   w.peripherals = msg.peripherals or w.peripherals
   if not w.role then w.role = msg.role end
+  if msg.config then w.config = msg.config end
+  -- A worker that declares its own role (via fct setup / worker.dat) is
+  -- trusted automatically. The approval flag exists only to gate workers
+  -- that joined as "generic" until an operator assigns them a role in the UI.
+  if msg.role and msg.role ~= "generic" and msg.role ~= "" then
+    w.approved = true
+  end
   w.last_seen   = util.now()
   w.missed_pings = 0
   workers[id] = w

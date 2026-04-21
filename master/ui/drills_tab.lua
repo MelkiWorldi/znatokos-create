@@ -19,8 +19,11 @@ function M.build(mon)
     x = 1, y = 4, w = lw, h = h - 4,
     items = {},
     renderItem = function(d)
-      local mark = d.active and "* " or "  "
-      return ("%s%-18s h=%d"):format(mark, (d.name or ""):sub(1, 18), d.historyCount or 0)
+      local mark
+      if d.active then mark = "*"
+      elseif d.online then mark = "."
+      else mark = "!" end  -- offline
+      return ("%s %-16s h=%d"):format(mark, (d.name or "?"):sub(1, 16), d.historyCount or 0)
     end,
     onSelect = function(d) selected = d.workerId end,
   }
@@ -87,9 +90,12 @@ end
 function M.draw(mon)
   local w, h = mon.getSize()
   local lw = math.floor(w * 0.35)
-  ui.write(mon, 1, 3, "Drills", colors.yellow, colors.black)
+  ui.write(mon, 1, 3, "Drills  (* active  . idle  ! offline)", colors.yellow, colors.black)
 
-  leftList.items = drills.list()
+  local items = drills.list()
+  leftList.items = items
+  -- Auto-select first drill if none picked yet
+  if not selected and items[1] then selected = items[1].workerId end
   leftList:draw(mon)
 
   drawDetail(mon, lw + 2, 4, w - lw - 2, 8)

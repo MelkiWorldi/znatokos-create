@@ -4,6 +4,7 @@ local logger = require("core.logger")
 local state  = require("core.state")
 local util   = require("core.util")
 local bus    = require("core.eventbus")
+local reg    = require("master.registry")
 
 local M = {}
 
@@ -26,10 +27,22 @@ end
 local function save() state.save(HISTORY_PATH, data) end
 
 function M.list()
+  -- Merge drills with sessions + any registered drill_unload workers that
+  -- haven't reported a session yet, so the tab is useful before the first run.
   local r = {}
+  local seen = {}
   for id, d in pairs(data.drills) do
     r[#r + 1] = { workerId = id, name = d.name, active = d.active,
-                  current = d.current, historyCount = #d.history }
+                  current = d.current, historyCount = #d.history,
+                  online = reg.isOnline(id) }
+    seen[id] = true
+  end
+  for _, w in ipairs(reg.byRole("drill_unload")) do
+    if not seen[w.id] then
+      local drillName = (w.config and w.config.drillName) or w.label or ("Drill #" .. w.id)
+      r[#r + 1] = { workerId = w.id, name = drillName, active = false,
+                    current = nil, historyCount = 0, online = reg.isOnline(w.id) }
+    end
   end
   table.sort(r, function(a, b) return a.workerId < b.workerId end)
   return r
