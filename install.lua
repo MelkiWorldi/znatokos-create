@@ -46,7 +46,7 @@ local FILES = {
     "recipes/_template.lua", "recipes/brass.lua", "recipes/andesite_alloy.lua",
   },
   bin = {
-    "bin/update.lua", "bin/fct.lua",
+    "bin/update.lua", "bin/fct.lua", "bin/setup.lua",
   },
 }
 
@@ -212,6 +212,19 @@ writeStartup(role)
 setLabel(role)
 
 print("Install complete. Label: " .. (os.getComputerLabel() or "?"))
+print()
+
+if role == "worker" then
+  write("Run the role setup wizard now? (Y/n) ")
+  local s = read():lower()
+  if s == "" or s == "y" or s == "yes" then
+    shell.run("/factory/bin/setup.lua")
+    return
+  end
+  print()
+  print("You can run it later with:  fct setup")
+end
+
 print("Rebooting in 3s...")
 os.sleep(3)
 os.reboot()

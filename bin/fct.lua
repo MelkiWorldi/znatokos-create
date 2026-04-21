@@ -7,6 +7,7 @@
 --   fct log           tail log.txt
 --   fct peripherals   list attached peripherals with their types
 --   fct reset         wipe /factory/data (keeps code) and reboot
+--   fct setup [role]  interactive role + config wizard (recommended)
 --   fct export        copy /factory/data to attached disk (migration)
 --   fct import        restore /factory/data from attached disk
 --   fct find-master   force rediscovery of master on this worker
@@ -30,6 +31,8 @@ if not cmd or cmd == "status" then
   print("  up:    " .. math.floor(os.clock()) .. "s")
   local online = rednet.isOpen() and "yes" or "no"
   print("  net:   " .. online)
+elseif cmd == "setup" then
+  shell.run("/factory/bin/setup.lua", args[2])
 elseif cmd == "update" then
   shell.run("/factory/bin/update.lua")
 elseif cmd == "reinstall" then
@@ -95,6 +98,6 @@ elseif cmd == "find-master" then
   print("Cleared masterId. Reboot to rediscover.")
 else
   print("Unknown command: " .. cmd)
-  print("Try: status | update | reinstall | role | log | peripherals")
+  print("Try: status | setup | update | reinstall | role | log | peripherals")
   print("     reset | export | import | find-master")
 end

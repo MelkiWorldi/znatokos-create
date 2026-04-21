@@ -41,6 +41,7 @@ queue, par-stock, recipes, drill history) is preserved.
 
 ```
 fct                 # status
+fct setup [role]    # interactive role + config wizard (no Lua editing)
 fct peripherals     # list attached peripherals with types
 fct log             # open /factory/data/log.txt
 fct reinstall       # re-run installer interactively
