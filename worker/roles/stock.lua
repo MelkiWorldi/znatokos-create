@@ -31,18 +31,17 @@ local function collect()
 end
 
 local function pushUpdate()
-  if not cfg.masterId then return end
+  if not net.getMaster() then return end
   local payload, err = collect()
   if not payload then
     logger.warn("stock", "collect failed: " .. tostring(err))
     return
   end
-  net.send(cfg.masterId, { type = "stock_update", payload = payload })
+  net.sendToMaster({ type = "stock_update", payload = payload })
 end
 
 function M.start(c)
   cfg = c or {}
-  cfg.masterId = cfg.masterId
   logger.info("stock", "started")
 end
 
@@ -55,7 +54,6 @@ end
 
 function M.onMessage(from, msg)
   if msg.type == "stock_poll" then
-    cfg.masterId = from
     pushUpdate()
   elseif msg.type == "stock_request" then
     local t = wrapTicker()

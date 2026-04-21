@@ -49,7 +49,7 @@ end
 function M.tick()
   if util.now() - lastStatus < 5 then return end
   lastStatus = util.now()
-  if not cfg.masterId then return end
+  if not net.getMaster() then return end
   local readerName = cfg.readerSide or periph.findOne(periph.TYPES.blockReader)
   local data = {}
   if readerName then
@@ -59,7 +59,7 @@ function M.tick()
     local ok2, name = pcall(reader.getBlockName)
     if ok2 then data.blockName = name end
   end
-  net.send(cfg.masterId, { type = "aero_status", data = data })
+  net.sendToMaster({ type = "aero_status", data = data })
 end
 
 return M

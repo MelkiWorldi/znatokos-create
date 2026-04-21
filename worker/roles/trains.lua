@@ -47,9 +47,9 @@ end
 function M.tick()
   if util.now() - lastPush < PUSH_INTERVAL then return end
   lastPush = util.now()
-  if not cfg.masterId then return end
+  if not net.getMaster() then return end
   local data = collect()
-  net.send(cfg.masterId, {
+  net.sendToMaster({
     type = "trains_update",
     stations = data.stations, trains = data.trains, schedules = data.schedules,
   })
@@ -57,7 +57,6 @@ end
 
 function M.onMessage(from, msg)
   if msg.type == "trains_poll" then
-    cfg.masterId = from
     lastPush = 0
     M.tick()
   elseif msg.type == "set_schedule" then

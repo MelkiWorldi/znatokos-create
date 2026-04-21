@@ -20,14 +20,14 @@ function M.start(c) cfg = c or {}; logger.info("package", "started") end
 function M.tick()
   if util.now() - lastPush < 5 then return end
   lastPush = util.now()
-  if not cfg.masterId then return end
+  if not net.getMaster() then return end
   local p = wrap()
   if not p then return end
   local packages = {}
   if p.listPackages then
     local ok, res = pcall(p.listPackages); if ok then packages = res end
   end
-  net.send(cfg.masterId, {
+  net.sendToMaster({
     type = "package_update",
     address = cfg.address,
     packages = packages,
@@ -36,7 +36,7 @@ end
 
 function M.onMessage(from, msg)
   if msg.type == "package_poll" then
-    cfg.masterId = from; lastPush = 0; M.tick()
+    lastPush = 0; M.tick()
   elseif msg.type == "set_address_filter" then
     local p = wrap()
     if p and p.setAddressFilter then

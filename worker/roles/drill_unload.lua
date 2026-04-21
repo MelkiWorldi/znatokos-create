@@ -161,17 +161,15 @@ local function newSession(reason)
 end
 
 local function pushStart(sess)
-  if not cfg.masterId then return end
-  net.send(cfg.masterId, {
+  net.sendToMaster({
     type = "drill_session_start",
     session = sess,
   })
-  logger.info("drill", "session start (" .. sess.trigger .. ")")
+  logger.info("drill", "session start (" .. sess.trigger .. ") -> master=" .. tostring(net.getMaster()))
 end
 
 local function pushDelta(sess, delta, added)
-  if not cfg.masterId then return end
-  net.send(cfg.masterId, {
+  net.sendToMaster({
     type = "drill_session_delta",
     sessionId = sess.id,
     delta = delta, added = added,
@@ -188,12 +186,10 @@ local function pushEnd(sess)
   else
     sess.ratePerMin = 0
   end
-  if cfg.masterId then
-    net.send(cfg.masterId, {
-      type = "drill_session_end",
-      session = sess,
-    })
-  end
+  net.sendToMaster({
+    type = "drill_session_end",
+    session = sess,
+  })
   logger.info("drill", ("session end: %d items in %ds (%.1f/min)"):format(
     sess.total, math.floor(sess.durationSec), sess.ratePerMin))
   table.insert(state.history, 1, sess)

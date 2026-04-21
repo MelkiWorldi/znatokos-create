@@ -20,6 +20,7 @@ local args = { ... }
 if args[1] then config.role = args[1] end
 
 net.open(function(msg) print(msg) end)
+net.setMaster(config.masterId)
 logger.info("worker", "started, id=" .. os.getComputerID() .. " role=" .. tostring(config.role))
 
 -- Role loader
@@ -46,6 +47,7 @@ local function discoverMaster()
     config.masterId = id
     saveConfig()
   end
+  net.setMaster(config.masterId)
   return id
 end
 
@@ -80,6 +82,7 @@ function handlers.assign(from, msg)
     config.config = {}
   end
   config.masterId = from
+  net.setMaster(from)
   saveConfig()
   logger.info("worker", "assigned role=" .. config.role .. " by master=" .. from)
   if roleModule and roleModule.stop then roleModule.stop() end

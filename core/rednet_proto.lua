@@ -73,6 +73,17 @@ function M.broadcast(msg)
   return rednet.broadcast(msg, M.PROTOCOL)
 end
 
+-- Cached master ID for worker roles that need to push to master without
+-- tracking it themselves (set by worker/main.lua on each (re)discovery).
+local cachedMasterId = nil
+function M.setMaster(id) cachedMasterId = id end
+function M.getMaster() return cachedMasterId end
+function M.sendToMaster(msg)
+  local id = cachedMasterId
+  if id then return rednet.send(id, msg, M.PROTOCOL) end
+  return rednet.broadcast(msg, M.PROTOCOL)
+end
+
 function M.receive(timeout)
   local id, msg = rednet.receive(M.PROTOCOL, timeout)
   return id, msg
