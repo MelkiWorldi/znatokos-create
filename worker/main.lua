@@ -19,7 +19,7 @@ local config = state.load(CONFIG_PATH, {
 local args = { ... }
 if args[1] then config.role = args[1] end
 
-net.open()
+net.open(function(msg) print(msg) end)
 logger.info("worker", "started, id=" .. os.getComputerID() .. " role=" .. tostring(config.role))
 
 -- Role loader

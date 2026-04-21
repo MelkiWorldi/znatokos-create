@@ -28,17 +28,38 @@ local drills_tab  = require("master.ui.drills_tab")
 parstock.setScheduler(scheduler)
 craft_menu.setScheduler(scheduler)
 
-net.open()
-net.hostAs("master")
-recipes.loadAll()
-
-local mon = periph.wrap(periph.TYPES.monitor)
-if not mon then
-  printError("No monitor attached. Master requires an Advanced Monitor.")
-  return
+-- Wait for monitor first so we can render a friendly "attach a modem" hint.
+local function awaitMonitor()
+  while true do
+    local m = periph.wrap(periph.TYPES.monitor)
+    if m then return m end
+    print("Waiting for Advanced Monitor... (attach one to this computer)")
+    parallel.waitForAny(
+      function() os.pullEvent("peripheral") end,
+      function() os.sleep(2) end
+    )
+  end
 end
+
+local mon = awaitMonitor()
 mon.setTextScale(0.5)
 mon.setBackgroundColor(colors.black); mon.clear()
+
+local function hint(text)
+  mon.setBackgroundColor(colors.black); mon.clear()
+  mon.setCursorPos(1, 1); mon.setTextColor(colors.yellow)
+  mon.write("Factory master")
+  mon.setCursorPos(1, 3); mon.setTextColor(colors.white)
+  for line in (text or ""):gmatch("[^\n]+") do
+    local _, y = mon.getCursorPos()
+    mon.write(line); mon.setCursorPos(1, y + 1)
+  end
+end
+
+-- Open rednet, waiting for modem if needed.
+net.open(hint)
+net.hostAs("master")
+recipes.loadAll()
 
 local tabs = ui.Tabs{
   mon = mon,

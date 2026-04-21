@@ -23,10 +23,29 @@ local function findModem()
   return nil
 end
 
-function M.open()
+-- Wait until any modem is attached. If onWaiting is given, it is called with
+-- a short status string so the caller can update a monitor / screen.
+local function awaitModem(onWaiting)
+  local announced = false
+  while true do
+    local name = findModem()
+    if name then return name end
+    if not announced and onWaiting then
+      onWaiting("Waiting for modem (Ender / Wireless) — attach one to this computer")
+      announced = true
+    end
+    -- Either an event arrives (peripheral attached) or we retry after 2s.
+    parallel.waitForAny(
+      function() os.pullEvent("peripheral") end,
+      function() os.sleep(2) end
+    )
+  end
+end
+
+function M.open(onWaiting)
   modemSide = findModem()
   if not modemSide then
-    error("no modem found — attach Ender Modem or Wireless Modem")
+    modemSide = awaitModem(onWaiting)
   end
   if not rednet.isOpen(modemSide) then rednet.open(modemSide) end
   rednet.host(M.PROTOCOL, tostring(os.getComputerID()))
